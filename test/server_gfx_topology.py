@@ -47,6 +47,10 @@ ROCM_ASSET_BACKENDS = [
     ("llamacpp", "rocm-nightly"),
 ]
 
+HRX_REPO = "ROCm/ggml-staging-release"
+HRX_TAG = "hrx-b2"
+HRX_FILENAME = "llama-hrx-b2-bin-manylinux-hrx-x64.tar.gz"
+
 
 def _workspace_root() -> Path:
     return Path(__file__).resolve().parent.parent
@@ -238,6 +242,37 @@ class GfxTopologyTests(ServerTestBase):
                 "Could not reach asset host for some probes (no 404s seen):\n  "
                 + "\n  ".join(network_errors)
             )
+
+    def test_003_hrx_dry_run_resolves_exact_pinned_asset(self):
+        """Every packaged HRX target must resolve to the exact pinned artifact."""
+        expected_url = (
+            f"https://github.com/{HRX_REPO}/releases/download/"
+            f"{HRX_TAG}/{HRX_FILENAME}"
+        )
+        for arch in ("gfx1100", "gfx1151", "gfx1201"):
+            response = self._dry_run("llamacpp", "hrx", arch)
+            self.assertEqual(
+                response.status_code,
+                200,
+                f"HRX dry-run failed for {arch}: {response.text[:500]}",
+            )
+
+            body = response.json()
+            self.assertEqual(body.get("repo"), HRX_REPO)
+            self.assertEqual(body.get("version"), HRX_TAG)
+            self.assertEqual(body.get("filename"), HRX_FILENAME)
+            self.assertEqual(body.get("url"), expected_url)
+            self.assertTrue(body.get("supported"))
+
+        for arch in ("gfx1101", "gfx1150", "gfx1152", "gfx1200"):
+            unsupported = self._dry_run("llamacpp", "hrx", arch)
+            self.assertEqual(
+                unsupported.status_code,
+                200,
+                f"HRX unsupported-arch dry-run failed for {arch}: "
+                f"{unsupported.text[:500]}",
+            )
+            self.assertFalse(unsupported.json().get("supported"))
 
 
 if __name__ == "__main__":

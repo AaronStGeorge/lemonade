@@ -240,6 +240,15 @@ InstallParams LlamaCppServer::get_install_params(const std::string& backend, con
 #else
         throw std::runtime_error("CPU llamacpp not supported on this platform");
 #endif
+    } else if (resolved_backend == "hrx") {
+#if defined(__linux__) && defined(__x86_64__)
+        params.repo = "ROCm/ggml-staging-release";
+        params.filename =
+            "llama-" + version + "-bin-manylinux-hrx-x64.tar.gz";
+#else
+        throw std::runtime_error(
+            "HRX llamacpp is only supported on Linux x86-64");
+#endif
     } else {  // vulkan
         params.repo = "ggml-org/llama.cpp";
 #ifdef _WIN32
@@ -282,6 +291,11 @@ void LlamaCppServer::load(const std::string& model_name,
     std::string llamacpp_args = options.get_option("llamacpp_args");
 
     RuntimeConfig::validate_backend_choice("llamacpp", llamacpp_backend_option);
+    if (llamacpp_backend == "hrx" && needs_gfx1151_cwsr_fix()) {
+        throw std::runtime_error(
+            "Linux kernel missing gfx1151 CWSR support. Visit "
+            "https://lemonade-server.ai/gfx1151_linux.html");
+    }
 
     LOG(INFO, "LlamaCpp") << "Using LlamaCpp Backend: " << llamacpp_backend << std::endl;
 
@@ -406,6 +420,10 @@ void LlamaCppServer::load(const std::string& model_name,
 
     // For ROCm on Linux, set LD_LIBRARY_PATH to include the ROCm library directory
     std::vector<std::pair<std::string, std::string>> env_vars;
+    if (llamacpp_backend == "hrx") {
+        // The HRX archive also contains a Vulkan implementation.
+        env_vars.push_back({"GGML_DISABLE_VULKAN", "1"});
+    }
 #ifndef _WIN32
     if (is_llamacpp_rocm_backend(llamacpp_backend)) {
         // Get the directory containing the executable (where ROCm .so files are)

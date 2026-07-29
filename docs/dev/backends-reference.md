@@ -12,7 +12,7 @@ the generator instead. Prose outside the markers is preserved. -->
 | `acestep` | ACE-Step | yes | no | cuda, rocm, vulkan |
 | `flm` | FastFlowLM NPU | no | yes | npu |
 | `kokoro` | Kokoro | no | no | cpu, metal |
-| `llamacpp` | Llama.cpp GPU | yes | yes | cpu, cuda, metal, rocm, system, vulkan |
+| `llamacpp` | Llama.cpp GPU | yes | yes | cpu, cuda, hrx, metal, rocm, system, vulkan |
 | `moonshine` | Moonshine | no | no | cpu |
 | `onnxruntime` | ONNX Runtime | no | no | cpu |
 | `openmoss` | OpenMOSS TTS | yes | no | cuda, rocm, vulkan |
@@ -41,6 +41,7 @@ the generator instead. Prose outside the markers is preserved. -->
 | `llamacpp` | cuda | linux, windows | nvidia_gpu (sm_100, sm_120, sm_121, sm_75, sm_80, sm_86, sm_89, sm_90) |
 | `llamacpp` | vulkan | linux, windows | amd_gpu; cpu (arm64, x86_64) |
 | `llamacpp` | rocm | linux, windows | amd_gpu (gfx103X, gfx110X, gfx1150, gfx1151, gfx1152, gfx120X, gfx908, gfx90a, gfx942, gfx950) |
+| `llamacpp` | hrx | linux | amd_gpu (gfx1100, gfx1151, gfx1201) |
 | `llamacpp` | cpu | linux, windows | cpu (arm64, x86_64) |
 | `moonshine` | cpu | windows | cpu (x86_64) |
 | `moonshine` | cpu | linux | cpu (arm64, x86_64) |

@@ -257,12 +257,13 @@ def main():
         choices=[
             "vulkan",
             "rocm",
+            "hrx",
             "cuda",
             "cpu",
             "metal",
             "system",
         ],
-        help="Backend to test (vulkan, rocm, cuda, cpu, metal, system)",
+        help="Backend to test (vulkan, rocm, hrx, cuda, cpu, metal, system)",
     )
     parser.add_argument(
         "--channel",

@@ -681,10 +681,13 @@ bool SystemInfo::backend_supports_arch(const std::string& recipe,
 // Generic installation check
 static bool is_recipe_installed(const std::string& recipe, const std::string& backend, std::string& error_message) {
     // Special handling for ROCm backends on gfx1151 (Strix Halo) if the kernel
-    // CWSR fix is missing (a per-descriptor flag).
+    // CWSR fix is missing (a per-descriptor flag). HRX has the same prerequisite
+    // but is intentionally not classified as a ROCm backend.
     const auto* cwsr_desc = backends::descriptor_for(recipe);
-    if (backend == "rocm" && cwsr_desc && cwsr_desc->rocm_requires_cwsr_fix &&
-        needs_gfx1151_cwsr_fix()) {
+    const bool requires_cwsr_fix =
+        (backend == "rocm" && cwsr_desc && cwsr_desc->rocm_requires_cwsr_fix)
+        || (recipe == "llamacpp" && backend == "hrx");
+    if (requires_cwsr_fix && needs_gfx1151_cwsr_fix()) {
         error_message = "Linux kernel missing support";
         return false;
     }
@@ -1386,7 +1389,13 @@ json SystemInfo::build_recipes_info(const json& devices) {
             }
         }
 
-        if (!supported) {
+        if (def.recipe == "llamacpp" && def.backend == "hrx"
+            && needs_gfx1151_cwsr_fix()) {
+            backend["state"] = "action_required";
+            backend["message"] = "Linux kernel missing gfx1151 CWSR support.";
+            backend["action"] =
+                "Visit https://lemonade-server.ai/gfx1151_linux.html";
+        } else if (!supported) {
             std::string message;
 
             if (def.backend == "system" && !available) {
@@ -1591,7 +1600,9 @@ json SystemInfo::build_recipes_info(const json& devices) {
             continue;
         }
 
-        bool skip_as_default = (def.backend == "system" && !prefer_llamacpp_system);
+        bool skip_as_default =
+            (def.recipe == "llamacpp" && def.backend == "hrx")
+            || (def.backend == "system" && !prefer_llamacpp_system);
         if (supported && !skip_as_default) {
             const std::string effective_state =
                 recipes[def.recipe]["backends"][def.backend].value("state", "unsupported");

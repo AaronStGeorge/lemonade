@@ -44,6 +44,10 @@ inline const BackendDescriptor descriptor = {
           {"gfx908", {/*os*/ {"linux"}, /*channels*/ {}}},
           {"gfx90a", {/*os*/ {"linux"}, /*channels*/ {}}},
           {"gfx942", {/*os*/ {"linux"}, /*channels*/ {}}}}},
+#if defined(__linux__) && defined(__x86_64__)
+        {"hrx", {"linux"}, {{"amd_gpu", {"gfx1100", "gfx1151", "gfx1201"}}},
+         "AMD gfx1100/gfx1151/gfx1201 GPUs on Linux x86-64, experimental/manual-only"},
+#endif
         {"cpu", {"windows", "linux"}, {{"cpu", {"x86_64", "arm64"}}}, "x86_64 CPU; ARM64 CPU (Linux)"},
     },
     /*supported_modes*/ {"chat", "embeddings", "reranking"},
@@ -57,8 +61,8 @@ inline const BackendDescriptor descriptor = {
     /*version_policy*/  VersionPolicy::Exact,
     /*self_manages_downloads*/ false,
     /*takes_args*/      true,
-    /*arg_variants*/    {"rocm", "vulkan", "cpu"},
-    /*bin_variants*/    {"rocm", "vulkan", "cuda", "cpu"},
+    /*arg_variants*/    {"rocm", "vulkan", "hrx", "cpu"},
+    /*bin_variants*/    {"rocm", "vulkan", "hrx", "cuda", "cpu"},
     /*config_extra*/    {{"prefer_system", true}},
 };
 

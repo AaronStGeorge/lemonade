@@ -1,9 +1,11 @@
 #include <lemon/recipe_options.h>
 #include <lemon/backends/backend_descriptor_registry.h>
 #include <lemon/utils/custom_args.h>
-#include <nlohmann/json.hpp>
+#include <algorithm>
 #include <map>
 #include <optional>
+#include <nlohmann/json.hpp>
+#include <stdexcept>
 #ifdef LEMONADE_CLI
 #include <CLI/CLI.hpp>
 #else
@@ -249,8 +251,18 @@ json RecipeOptions::get_option(const std::string& opt) const {
     // Dynamic defaults for backends if not explicitly set
     SystemInfo::SupportedBackendsResult backend_result;
     if (try_get_backend_options(opt, backend_result)) {
-        if (!backend_result.backends.empty()) {
+        if (opt != "llamacpp_backend" && !backend_result.backends.empty()) {
             return backend_result.backends[0];
+        }
+        auto automatic = std::find_if(
+            backend_result.backends.begin(), backend_result.backends.end(),
+            [](const std::string& backend) { return backend != "hrx"; });
+        if (automatic != backend_result.backends.end()) {
+            return *automatic;
+        }
+        if (!backend_result.backends.empty()) {
+            throw std::runtime_error(
+                "HRX must be selected explicitly with '--llamacpp hrx'.");
         }
     }
 #endif

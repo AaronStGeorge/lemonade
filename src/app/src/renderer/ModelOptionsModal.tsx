@@ -26,6 +26,7 @@ const BACKEND_DISPLAY_NAMES: Record<string, string> = {
   rocm: "ROCm",
   vulkan: "Vulkan",
   metal: "Metal",
+  hrx: "HRX",
 };
 
 const getBackendDisplayName = (backend: string): string => {
