@@ -47,9 +47,9 @@ ROCM_ASSET_BACKENDS = [
     ("llamacpp", "rocm-nightly"),
 ]
 
-HRX_REPO = "ROCm/ggml-staging-release"
-HRX_TAG = "hrx-b2"
-HRX_FILENAME = "llama-hrx-b2-bin-manylinux-hrx-x64.tar.gz"
+HRX_REPO = "ROCm/ggml-staging-automation"
+HRX_TAG = "hrx-b42"
+HRX_FILENAME = "llama-hrx-b42-bin-manylinux-hrx-x64.tar.gz"
 
 
 def _workspace_root() -> Path:

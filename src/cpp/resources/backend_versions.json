@@ -43,15 +43,15 @@
           "trellis-cuda-windows-x64.zip": "sha256:47b87271f8b644a8e50767f6d58d5baf597e1aa6bb46b809a5e5d5b0ac741b29"
         }
       },
-      "ROCm/ggml-staging-release": {
-        "hrx-b2": {
-          "llama-hrx-b2-bin-manylinux-hrx-x64.tar.gz": "sha256:bcc514835bea3e342e390df0b233426070802df8ce13eb6be4a06beeca619f63"
+      "ROCm/ggml-staging-automation": {
+        "hrx-b42": {
+          "llama-hrx-b42-bin-manylinux-hrx-x64.tar.gz": "sha256:c0e1ae695f2b2b15ff291a364acb99b574b1d77c3d38d9f957904ccf8ad015dd"
         }
       }
     }
   },
   "llamacpp": {
-    "hrx": "hrx-b2",
+    "hrx": "hrx-b42",
     "vulkan": "b10375",
     "rocm-stable": "b10470",
     "rocm-nightly": "b1311",

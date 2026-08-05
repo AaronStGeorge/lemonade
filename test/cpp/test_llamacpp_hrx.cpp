@@ -98,12 +98,12 @@ void test_support_gating() {
 }
 
 void test_install_contract() {
-    constexpr const char* kRepo = "ROCm/ggml-staging-release";
-    constexpr const char* kTag = "hrx-b2";
+    constexpr const char* kRepo = "ROCm/ggml-staging-automation";
+    constexpr const char* kTag = "hrx-b42";
     constexpr const char* kFilename =
-        "llama-hrx-b2-bin-manylinux-hrx-x64.tar.gz";
+        "llama-hrx-b42-bin-manylinux-hrx-x64.tar.gz";
     constexpr const char* kChecksum =
-        "sha256:bcc514835bea3e342e390df0b233426070802df8ce13eb6be4a06beeca619f63";
+        "sha256:c0e1ae695f2b2b15ff291a364acb99b574b1d77c3d38d9f957904ccf8ad015dd";
 
 #if defined(__linux__) && defined(__x86_64__)
     const auto params = LlamaCppServer::get_install_params("hrx", kTag);
@@ -137,9 +137,9 @@ void test_install_contract() {
            "HRX checksum is exact");
 
     const std::string entries =
-        "llama-hrx-b2/\n"
-        "llama-hrx-b2/bin/llama-server\n"
-        "llama-hrx-b2/lib/libhsa-runtime64.so\n";
+        "llama-hrx-b42/\n"
+        "llama-hrx-b42/bin/llama-server\n"
+        "llama-hrx-b42/lib/libhsa-runtime64.so\n";
     expect(lemon::utils::compute_tarball_strip_components(entries) == 1,
            "normal extraction flattens HRX to its bin and lib directories");
 }

@@ -38,7 +38,7 @@ Lemonade uses [llama.cpp](https://github.com/ggerganov/llama.cpp) as its primary
 - **Platform**: Linux x86-64 only
 - **Hardware**: AMD GPUs using `gfx1100`, `gfx1151`, or `gfx1201`
 - **Validated model**: `Qwen3-Coder-30B-A3B-Instruct-GGUF`
-- **Release**: [`ROCm/ggml-staging-release` `hrx-b2`](https://github.com/ROCm/ggml-staging-release/releases/tag/hrx-b2)
+- **Release**: [`ROCm/ggml-staging-automation` `hrx-b42`](https://github.com/ROCm/ggml-staging-automation/releases/tag/hrx-b42)
 
 HRX is excluded from automatic backend selection. Select it explicitly for a load, save that choice with `--save-options`, or configure it globally:
 

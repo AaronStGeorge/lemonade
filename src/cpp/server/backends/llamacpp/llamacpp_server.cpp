@@ -242,7 +242,7 @@ InstallParams LlamaCppServer::get_install_params(const std::string& backend, con
 #endif
     } else if (resolved_backend == "hrx") {
 #if defined(__linux__) && defined(__x86_64__)
-        params.repo = "ROCm/ggml-staging-release";
+        params.repo = "ROCm/ggml-staging-automation";
         params.filename =
             "llama-" + version + "-bin-manylinux-hrx-x64.tar.gz";
 #else
