@@ -37,19 +37,21 @@ Lemonade uses [llama.cpp](https://github.com/ggerganov/llama.cpp) as its primary
 
 - **Platform**: Linux x86-64 only
 - **Hardware**: AMD GPUs using `gfx1100`, `gfx1151`, or `gfx1201`
-- **Validated model**: `Qwen3-Coder-30B-A3B-Instruct-GGUF`
+- **Only validated pairing**: built-in `Qwen3-30B-A3B-Instruct-2507-GGUF` with checkpoint `unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf`
 - **Release**: [`ROCm/ggml-staging-automation` `hrx-b42`](https://github.com/ROCm/ggml-staging-automation/releases/tag/hrx-b42)
 
 HRX is excluded from automatic backend selection. Select it explicitly for a load, save that choice with `--save-options`, or configure it globally:
 
 ```bash
-lemonade run Qwen3-Coder-30B-A3B-Instruct-GGUF --llamacpp hrx
-lemonade load Qwen3-Coder-30B-A3B-Instruct-GGUF \
+lemonade run Qwen3-30B-A3B-Instruct-2507-GGUF --llamacpp hrx
+lemonade load Qwen3-30B-A3B-Instruct-2507-GGUF \
   --llamacpp hrx --save-options
 lemonade config set llamacpp.backend=hrx
 ```
 
-API loads use `"llamacpp_backend": "hrx"`. The normal `hrx_args`, `hrx_bin`, and device overrides apply; the built-in pin, explicit tags, and local paths are supported, while `latest` is not guaranteed. HRX launches disable Vulkan registration only in the HRX child, so ordinary Vulkan installations remain available.
+Lemonade rejects every other built-in or remotely registered model for HRX. As a best-effort option, you can manually try a local llama.cpp model discovered through `extra_models_dir`, registered from a local path, or uploaded/imported from a local file. These local models are not validated, and compatibility is not guaranteed.
+
+API loads use `"llamacpp_backend": "hrx"`. The normal `hrx_args`, `hrx_bin`, and device overrides apply. For `hrx_bin`, the built-in pin, explicit release tags, and local binary paths are supported; `latest` is not guaranteed. HRX launches disable Vulkan registration only in the HRX child, so ordinary Vulkan installations remain available.
 
 On `gfx1151`, before installing or loading HRX, Lemonade checks that the KFD topology exposes both `cwsr_size` and `ctl_stack_size`. If either is missing, it reports `action_required`; follow the [Kernel Update Required](https://lemonade-server.ai/gfx1151_linux.html) guide and reboot before retrying.
 

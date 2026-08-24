@@ -3106,11 +3106,11 @@ endif()
 
 set(_LLAMACPP_HRX_TEST_SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/test/cpp/test_llamacpp_hrx.cpp")
-if(EXISTS "${_LLAMACPP_HRX_TEST_SRC}")
+if(BUILD_TESTING AND EXISTS "${_LLAMACPP_HRX_TEST_SRC}")
     add_executable(test_llamacpp_hrx test/cpp/test_llamacpp_hrx.cpp)
     target_link_libraries(test_llamacpp_hrx PRIVATE lemonade-server-core)
     add_dependencies(test_llamacpp_hrx copy_resources)
-    add_test(NAME LlamacppHrxTest COMMAND test_llamacpp_hrx)
+    add_cpp_ci_test(LlamacppHrxTest CI ON COMMAND test_llamacpp_hrx)
 endif()
 
 set(_HTTP_CLIENT_SECURITY_TEST_SRC "${CMAKE_CURRENT_SOURCE_DIR}/test/cpp/test_http_client_security.cpp")

@@ -22,6 +22,7 @@ using lemon::BackendManager;
 using lemon::BackendSupport;
 using lemon::CPUInfo;
 using lemon::GPUInfo;
+using lemon::ModelInfo;
 using lemon::NPUInfo;
 using lemon::RecipeOptions;
 using lemon::SystemInfo;
@@ -158,6 +159,166 @@ void test_recipe_options() {
            "HRX has a standard binary override");
 }
 
+void test_model_admission() {
+    constexpr const char* kValidatedModel =
+        "Qwen3-30B-A3B-Instruct-2507-GGUF";
+    constexpr const char* kValidatedCheckpoint =
+        "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:"
+        "Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf";
+    constexpr const char* kCustomArgs = "--threads 7";
+
+    const json catalog = lemon::utils::JsonUtils::load_from_file(
+        lemon::utils::get_resource_path("resources/server_models.json"));
+    expect(catalog.at(kValidatedModel).at("checkpoint") == kValidatedCheckpoint,
+           "validated HRX pairing matches the built-in catalog");
+
+    struct AdmissionCase {
+        const char* label;
+        const char* backend;
+        const char* model_name;
+        const char* checkpoint;
+        const char* source;
+        bool accepted;
+    };
+
+    const std::vector<AdmissionCase> cases = {
+        {
+            "exact validated built-in pairing is admitted",
+            "hrx",
+            kValidatedModel,
+            kValidatedCheckpoint,
+            "",
+            true,
+        },
+        {
+            "extra_models_dir model is admitted as best effort",
+            "hrx",
+            "extra.Unrelated-GGUF",
+            "/models/unrelated.gguf",
+            "extra_models_dir",
+            true,
+        },
+        {
+            "local-path model is admitted as best effort",
+            "hrx",
+            "user.LocalPath-GGUF",
+            "/models/local-path.gguf",
+            "local_path",
+            true,
+        },
+        {
+            "local-upload model is admitted as best effort",
+            "hrx",
+            "user.LocalUpload-GGUF",
+            "imports/local-upload.gguf",
+            "local_upload",
+            true,
+        },
+        {
+            "validated built-in identity with another checkpoint is rejected",
+            "hrx",
+            kValidatedModel,
+            "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q8_0.gguf",
+            "",
+            false,
+        },
+        {
+            "another built-in model is rejected",
+            "hrx",
+            "Qwen3-30B-A3B-GGUF",
+            "unsloth/Qwen3-30B-A3B-GGUF:Q4_0",
+            "",
+            false,
+        },
+        {
+            "remote user lookalike is rejected",
+            "hrx",
+            "user.Qwen3-30B-A3B-Instruct-2507-GGUF",
+            kValidatedCheckpoint,
+            "",
+            false,
+        },
+        {
+            "user identity claiming extra_models_dir is rejected",
+            "hrx",
+            "user.SourceLookalike-GGUF",
+            "/models/source-lookalike.gguf",
+            "extra_models_dir",
+            false,
+        },
+        {
+            "extra identity without local provenance is rejected",
+            "hrx",
+            "extra.PrefixOnly-GGUF",
+            "owner/prefix-only-GGUF:Q4_K_M.gguf",
+            "",
+            false,
+        },
+        {
+            "local source without canonical identity is rejected",
+            "hrx",
+            "SourceOnly-GGUF",
+            "/models/source-only.gguf",
+            "local_path",
+            false,
+        },
+        {
+            "non-HRX model passes unchanged",
+            "vulkan",
+            "Another-Builtin-GGUF",
+            "owner/another-GGUF:Q4_K_M.gguf",
+            "",
+            true,
+        },
+    };
+
+    std::string representative_rejection;
+    for (const auto& test_case : cases) {
+        ModelInfo info;
+        info.model_name = test_case.model_name;
+        info.checkpoints["main"] = test_case.checkpoint;
+        info.recipe = "llamacpp";
+        info.source = test_case.source;
+
+        RecipeOptions options(
+            "llamacpp",
+            {
+                {"llamacpp_backend", test_case.backend},
+                {"llamacpp_args", kCustomArgs},
+                {"merge_args", false},
+            });
+
+        std::string rejection;
+        try {
+            lemon::backends::llamacpp::ops()->resolve_runtime_options(info, options);
+        } catch (const std::exception& error) {
+            rejection = error.what();
+        }
+
+        const bool was_accepted = rejection.empty();
+        expect(was_accepted == test_case.accepted, test_case.label);
+        if (!test_case.accepted && representative_rejection.empty()) {
+            representative_rejection = rejection;
+        }
+        if (test_case.accepted) {
+            expect(options.get_option("llamacpp_args").get<std::string>() == kCustomArgs,
+                   std::string(test_case.label) + " preserves argument composition");
+        }
+    }
+
+    expect(representative_rejection.find("HRX") != std::string::npos,
+           "rejection identifies HRX");
+    expect(representative_rejection.find(kValidatedModel) != std::string::npos,
+           "rejection identifies the validated pairing");
+    expect(representative_rejection.find(kValidatedCheckpoint) != std::string::npos,
+           "rejection identifies the validated checkpoint");
+    const bool describes_local_best_effort =
+        representative_rejection.find("Local") != std::string::npos &&
+        representative_rejection.find("best-effort") != std::string::npos;
+    expect(describes_local_best_effort,
+           "rejection describes the local-model best-effort option");
+}
+
 void test_automatic_default() {
 #if defined(__linux__) && defined(__x86_64__)
     TestSystemInfo system_info;
@@ -203,6 +364,7 @@ int main() {
         test_support_gating();
         test_install_contract();
         test_recipe_options();
+        test_model_admission();
         test_automatic_default();
     } catch (const std::exception& error) {
         std::cerr << "FAIL: unexpected exception: " << error.what() << std::endl;

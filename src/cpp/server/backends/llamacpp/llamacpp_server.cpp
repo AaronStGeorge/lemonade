@@ -6,6 +6,7 @@
 #include "lemon/backends/backend_registry.h"
 #include "lemon/backends/backend_ops.h"
 #include "lemon/backends/backend_utils.h"
+#include "lemon/canonical_id.h"
 #include "lemon/gguf_capabilities.h"
 #include "lemon/gguf_reader.h"
 #include "lemon/model_manager.h"
@@ -798,6 +799,55 @@ bool is_ggml_hip_plugin_available() {
 class LlamaCppOps : public BackendOps {
 public:
     void resolve_runtime_options(const ModelInfo& info, RecipeOptions& options) const override {
+        const json backend_value = options.get_option("llamacpp_backend");
+        const std::string backend =
+            backend_value.is_string() ? backend_value.get<std::string>() : "";
+        const bool uses_hrx = backend == "hrx";
+
+        if (uses_hrx) {
+            constexpr const char* kValidatedModel =
+                "Qwen3-30B-A3B-Instruct-2507-GGUF";
+            constexpr const char* kValidatedCheckpoint =
+                "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:"
+                "Qwen3-30B-A3B-Instruct-2507-Q4_K_M.gguf";
+
+            const auto canonical_id = parse_canonical_id(info.model_name);
+            const bool has_validated_builtin_identity =
+                info.model_name == kValidatedModel;
+            const bool has_validated_checkpoint =
+                info.checkpoint() == kValidatedCheckpoint;
+            const bool is_validated_pairing =
+                has_validated_builtin_identity && has_validated_checkpoint;
+
+            const bool has_extra_identity =
+                canonical_id && canonical_id->source == ModelSource::Imported;
+            const bool has_extra_models_source =
+                info.source == "extra_models_dir";
+            const bool is_local_extra_model =
+                has_extra_identity && has_extra_models_source;
+
+            const bool has_user_identity =
+                canonical_id && canonical_id->source == ModelSource::Registered;
+            const bool has_local_path_source = info.source == "local_path";
+            const bool has_local_upload_source = info.source == "local_upload";
+            const bool has_local_user_source =
+                has_local_path_source || has_local_upload_source;
+            const bool is_local_user_model =
+                has_user_identity && has_local_user_source;
+
+            const bool is_admitted =
+                is_validated_pairing || is_local_extra_model || is_local_user_model;
+            if (!is_admitted) {
+                throw std::invalid_argument(
+                    "HRX's only validated built-in pairing is '" +
+                    std::string(kValidatedModel) + "' with checkpoint '" +
+                    kValidatedCheckpoint + "'. Local llama.cpp models from "
+                    "extra_models_dir, a local path, or a local upload/import "
+                    "may be tried as a best-effort option without a "
+                    "compatibility guarantee.");
+            }
+        }
+
         const json merge_args_value = options.get_option("merge_args");
         const bool merge_args =
             merge_args_value.is_boolean() ? merge_args_value.get<bool>() : true;
